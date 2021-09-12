@@ -1,0 +1,142 @@
+asyncapi: 2.1.0
+info:
+  title: Обмен заметками
+  version: 1.0.0
+  description: |
+    Описание процесса приглашения пользователя в проект.
+    Паттерн – Message Bus.
+defaultContentType: application/json
+channels:
+  project/invite:
+    publish:
+      message:
+        tags:
+          - name: notes
+        name: InviteUser
+        title: Приглашение пользователя в проект по ссылке
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            email:
+              type: string
+              description: Email приглашаемого пользователя.
+            project_id:
+              type: string
+              description: Идентификатор проекта для выдачи доступа.
+            project_name:
+              type: string
+              description: Наименование проекта.
+            inviting_id:
+              type: string
+              description: Идентификатор приглашающего пользователя.
+            inviting_name:
+              type: string
+              description: Имя приглашающего пользователя.
+          required:
+            - email
+            - project_id
+            - project_name
+            - inviting_id
+            - inviting_name
+          additionalProperties: false
+        examples:
+          - payload:
+              email: "pupkin@email.ru"
+              project_id: "8e92cd6d-877b-4580-86e3-8eb5684b1a8d"
+              project_name: "Строительство судоканала"
+              inviting_id: "0116de08-9736-4eb0-bb8a-1e820d5596a4"
+              inviting_name: "Василий Федоров"
+    subscribe:
+      message:
+        name: InviteUserResponse
+        examples:
+          - payload:
+              status: OK
+
+  project/invited:
+    publish:
+      message:
+        tags:
+          - name: notes
+        name: InvitedUserRegister
+        title: Регистрация пользователя и выдача доступа к проекту
+        contentType: application/json
+        bindings:
+          http:
+            type: request
+            method: GET
+            query:
+              type: object
+              properties:
+                email:
+                  type: string
+                  description: Email приглашаемого пользователя.
+                project_id:
+                  type: string
+                  description: Идентификатор проекта для выдачи доступа.
+                inviting_id:
+                  type: string
+                  description: Идентификатор приглашающего пользователя.
+                sig:
+                  type: string
+                  description: Подпись запроса.
+              required:
+                - email
+                - project_id
+                - inviting_id
+                - sig
+              additionalProperties: false
+            bindingVersion: '0.1.0'
+
+    subscribe:
+      message:
+        name: InvitedUserConfirmedResponse
+        examples:
+          - payload:
+              status: Created
+
+  notification/sendEmail:
+    publish:
+      message:
+        name: InviteUser
+        payload:
+          type: object
+          properties:
+            email:
+              type: string
+              description: Email приглашаемого пользователя.
+          required:
+            - email
+        examples:
+          - payload:
+              email: "pupkin@email.ru"
+              project_id: "8e92cd6d-877b-4580-86e3-8eb5684b1a8d"
+              project_name: "Строительство судоканала"
+              inviting_id: "0116de08-9736-4eb0-bb8a-1e820d5596a4"
+              inviting_name: "Василий Федоров"
+
+  project/add:
+    publish:
+      message:
+        name: InvitedUserValidated
+        tags:
+          - name: users
+        title: Подтверждение пользователя для предоставления доступа
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            id:
+              type: string
+              description: Идентификатор приглашаемого пользователя.
+            email:
+              type: string
+              description: Email приглашаемого пользователя.
+          required:
+            - id
+            - email
+        examples:
+          - payload:
+              id: "773d2b6d-9109-4b65-82bf-38d8b9ee6952"
+              email: "pupkin@email.ru"
